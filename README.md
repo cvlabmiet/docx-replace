@@ -9,6 +9,11 @@ Use `pip` and install the program by url using [release page](https://github.com
 $ pip install https://github.com/cvlabmiet/docx-replace/archive/v0.1.2.zip
 ```
 
+On NixOS (latest version):
+```sh
+$ nix-env -if https://api.github.com/repos/cvlabmiet/docx-replace/tarball/master
+```
+
 # Usage
 
 The program `docx-replace` has convenient command line interface, provided by `argparse` python module:
