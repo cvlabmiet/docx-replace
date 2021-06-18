@@ -8,7 +8,7 @@ with pkgs; with python3Packages; buildPythonApplication rec {
 
   propagatedBuildInputs = [ python-docx ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = https://github.com/cvlabmiet/docx-replace;
     description = "Replace text inside docx file";
     license = licenses.mit;
