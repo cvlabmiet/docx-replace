@@ -2,7 +2,7 @@
 
 with pkgs; with python3Packages; buildPythonApplication rec {
   pname = "docx-replace";
-  version = "0.1.2";
+  version = builtins.head (builtins.match ".*__version__ = '([[:digit:]\\.]+)'.*" (builtins.readFile ./docx-replace));
 
   src = ./.;
 

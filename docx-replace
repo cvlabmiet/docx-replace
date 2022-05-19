@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import docx, argparse
+import docx, argparse, sys
 from docx.opc.constants import CONTENT_TYPE as CT
 from docx.opc.part import PartFactory, XmlPart
 from docx.text.paragraph import Paragraph
 from docx.oxml.text.paragraph import CT_P
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 # register parser for /word/header1.xml and /word/footer1.xml
 PartFactory.part_type_for[CT.WML_HEADER] = XmlPart
@@ -16,17 +16,22 @@ PartFactory.part_type_for[CT.WML_FOOTER] = XmlPart
 def pattern_split(x):
     return x.split('=')
 
+
 def replace_in_paragraphs(paragraphs, patterns):
     for paragraph in paragraphs:
         for pattern in patterns:
             if pattern[0] in paragraph.text:
-                font_size = paragraph.runs[0].font.size;
-                text = paragraph.text.replace(pattern[0], pattern[1])
-                paragraph.text = text
-                for r in paragraph.runs:
-                    r.font.size = font_size
+                is_replaced = False
+                for item in paragraph.runs:
+                    if pattern[0] in item.text:
+                        item.text = item.text.replace(pattern[0], pattern[1])
+                        is_replaced = True
 
-parser = argparse.ArgumentParser(description='Replace text in docx. Use some complex text like "<[%MyText%]>", to guarantee the replacement')
+                if not is_replaced:
+                    print(f"Multipart pattern {pattern[0]} is detected. Change phrase [{paragraph.text}] in your docx file", file=sys.stderr)
+
+
+parser = argparse.ArgumentParser(description='Replace text in docx. Use some complex text like "<%MyText%>", to guarantee the replacement')
 parser.add_argument('--version', '-V', action='version', version='%(prog)s ' + __version__)
 parser.add_argument('docx', nargs=1, help='the source docx file')
 parser.add_argument('--output', '-o', nargs=1, help='output file', required=True)
@@ -35,6 +40,7 @@ args = parser.parse_args()
 
 doc = docx.Document(args.docx[0])
 
+# replace in ordinary text
 replace_in_paragraphs(doc.paragraphs, args.pattern)
 
 # replace in headers and footers
@@ -44,5 +50,11 @@ for part in doc.part.package.parts:
 
     paragraphs = [Paragraph(p, part) for lst in part.element.iter() for p in lst if isinstance(p, CT_P)]
     replace_in_paragraphs(paragraphs, args.pattern)
+
+# replace in tables
+for table in doc.tables:
+    for row in table.rows:
+        for cell in row.cells:
+            replace_in_paragraphs(cell.paragraphs, args.pattern)
 
 doc.save(args.output[0])
